@@ -1,0 +1,28 @@
+<h2>Ports</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Port</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in ports %}
+    <tr>
+      <td>{{ p.port }}</td>
+      <td>
+        {% if p.open %}
+        <span class="ok">OPEN</span>
+        {% else %}
+        <span class="bad">CLOSED</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="muted">
+  3000(Next) / 5173(Vite) / 8000(FastAPI) / 8080(Spring) / 11434(Ollama)
+</p>

@@ -1,0 +1,23 @@
+{% extends "layout.html" %} {%block content%}
+<h1>DevDash</h1>
+<p class="muted">Platform: {{platform}}</p>
+
+<div class="grid">
+  <section
+    class="card"
+    hx-get="/partials/metrics"
+    hx-trigger="load, every 2s"
+    hx-swap="innerHTML"
+  >
+    <div class="muted">Loading metrics...</div>
+  </section>
+  <section
+    class="card"
+    hx-get="/partials/ports_watch"
+    hx-trigger="load,every 5s"
+    hx-swap="innerHTML"
+  >
+    <div class="muted">Checking port...</div>
+  </section>
+</div>
+{%endblock%}

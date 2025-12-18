@@ -1,0 +1,20 @@
+<h2>System</h2>
+
+<div class="row">
+  <div><span class="label">CPU</span> {{ cpu_percent }}</div>
+  <div><span class="label">Uptime</span> {{ uptime_secs }}s</div>
+</div>
+
+<div class="row">
+  <div><span class="label">Memory</span> {{ mem_text }}</div>
+</div>
+
+<div class="row">
+  <div><span class="label">Swap</span> {{ swap_text }}</div>
+</div>
+
+{% if swap_used_nonzero %}
+<div class="warn">
+  ⚠ Swap is being used. LLM開発だと性能低下/不安定化のサインです。
+</div>
+{% endif %}
