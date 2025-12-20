@@ -19,7 +19,7 @@ struct MetricsTemplate {
 }
 
 pub async fn metrics(State(state): State<Arc<AppState>>) -> Html<String> {
-    let mut sys = sysinfo::System::new_all();
+    let mut sys = state.sys.lock().unwrap();
     sys.refresh_cpu_all();
     sys.refresh_memory();
 
