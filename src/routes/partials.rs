@@ -2,6 +2,7 @@ use askama::Template;
 use axum::{extract::State, response::Html};
 use std::result::Result::Ok;
 use std::sync::Arc;
+use sysinfo::ProcessesToUpdate;
 
 use crate::state::AppState;
 
@@ -89,5 +90,82 @@ pub async fn ports_watch(State(state): State<Arc<AppState>>) -> Html<String> {
     }
 
     let t = PortsWatchTemplate { ports: rows };
+    Html(t.render().unwrap())
+}
+
+#[derive(Clone, Debug)]
+pub struct ProcRow {
+    pub pid: i32,
+    pub name: String,
+    pub cpu_percent: f32,
+    pub mem_mb: f32,
+    pub cpu_text: String,
+    pub mem_text: String,
+}
+
+fn proc_row_from(sys_proc: &sysinfo::Process, pid: sysinfo::Pid) -> ProcRow {
+    let pid_i32 = pid.as_u32() as i32;
+
+    let mem_mb = (sys_proc.memory() as f64 / 1024.0) as f32;
+    let cpu = sys_proc.cpu_usage();
+
+    ProcRow {
+        pid: pid_i32,
+        name: sys_proc.name().to_string_lossy().to_string(),
+        cpu_percent: cpu,
+        mem_mb,
+        cpu_text: format!("{:.1}%", cpu),
+        mem_text: format!("{:.0} MB", mem_mb),
+    }
+}
+
+fn top_procs_by_cpu(sys: &mut sysinfo::System, n: usize) -> Vec<ProcRow> {
+    sys.refresh_processes(ProcessesToUpdate::All);
+    sys.refresh_cpu_all();
+
+    let mut rows: Vec<ProcRow> = Vec::new();
+    for (pid, p) in sys.processes() {
+        rows.push(proc_row_from(p, *pid));
+    }
+
+    rows.sort_by(|a, b| {
+        b.cpu_percent
+            .partial_cmp(&a.cpu_percent)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    rows.truncate(n);
+    rows
+}
+
+fn top_procs_by_mem(sys: &mut sysinfo::System, n: usize) -> Vec<ProcRow> {
+    sys.refresh_processes(ProcessesToUpdate::All);
+
+    let mut rows: Vec<ProcRow> = Vec::new();
+    for (pid, p) in sys.processes() {
+        rows.push(proc_row_from(p, *pid));
+    }
+
+    rows.sort_by(|a, b| {
+        b.mem_mb
+            .partial_cmp(&a.mem_mb)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    rows.truncate(n);
+    rows
+}
+
+#[derive(Template)]
+#[template(path = "partials/top_procs.html")]
+struct TopProcsTemplate {
+    pub top_cpu: Vec<ProcRow>,
+    pub top_mem: Vec<ProcRow>,
+}
+
+pub async fn top_procs(State(state): State<Arc<AppState>>) -> Html<String> {
+    let mut sys = state.sys.lock().unwrap();
+    let top_cpu = top_procs_by_cpu(&mut sys, 10);
+    let top_mem = top_procs_by_mem(&mut sys, 10);
+
+    let t = TopProcsTemplate { top_cpu, top_mem };
     Html(t.render().unwrap())
 }

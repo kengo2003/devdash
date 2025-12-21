@@ -23,6 +23,14 @@
   >
     <div class="text-slate-500">Checking ports...</div>
   </section>
+  <section
+    class="rounded-2xl border bg-white p-4 shadow-sm"
+    hx-get="/partials/top_procs"
+    hx-trigger="load, every 10s"
+    hx-swap="innerHTML"
+  >
+    <div class="text-slate-500">Checking Top Process...</div>
+  </section>
 </div>
 
 {% endblock %}

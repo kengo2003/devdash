@@ -15,6 +15,7 @@ async fn main() {
         .route("/", get(routes::page::index))
         .route("/partials/metrics", get(routes::partials::metrics))
         .route("/partials/ports_watch", get(routes::partials::ports_watch))
+        .route("/partials/top_procs", get(routes::partials::top_procs))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

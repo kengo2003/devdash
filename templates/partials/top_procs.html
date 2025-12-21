@@ -1,0 +1,36 @@
+<h2 class="mb-3 text-xl font-semibold">Top Processes (CPU)</h2>
+
+<div class="overflow-x-auto">
+  <table class="min-w-full border-collapse">
+    <thead>
+      <tr class="border-b bg-slate-50 text-left text-slate-600">
+        <th class="px-3 py-2">PID</th>
+        <th class="px-3 py-2">Name</th>
+        <th class="px-3 py-2">CPU</th>
+        <th class="px-3 py-2">Memory</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for t in top_cpu %}
+      <tr class="border-b hover:bg-slate-50">
+        <td class="px-3 py-2 font-mono text-slate-500">{{ t.pid }}</td>
+
+        <td class="px-3 py-2">{{ t.name }}</td>
+
+        <td class="px-3 py-2">
+          {% if t.cpu_percent >= 50.0 %}
+          <span class="font-semibold text-red-600"> {{ t.cpu_text }} </span>
+          {% else if t.cpu_percent >= 20.0 %}
+          <span class="font-semibold text-amber-600"> {{ t.cpu_text }} </span>
+          {% else %}
+          <span class="text-slate-700"> {{ t.cpu_text }} </span>
+          {% endif %}
+        </td>
+
+        <td class="px-3 py-2 text-slate-700">{{ t.mem_text }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
