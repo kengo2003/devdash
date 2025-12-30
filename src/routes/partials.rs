@@ -9,6 +9,17 @@ use crate::state::AppState;
 use tokio::net::TcpStream;
 use tokio::time::{Duration, timeout};
 
+fn format_bytes(bytes: f64) -> String {
+    let mib = bytes as f64 / 1024.0 / 1024.0;
+
+    if mib >= 1024.0 {
+        let gib = mib / 1024.0;
+        format!("{:.2} GB", gib)
+    } else {
+        format!("{:.1} MB", mib)
+    }
+}
+
 #[derive(Template)]
 #[template(path = "partials/metrics.html")]
 struct MetricsTemplate {
@@ -26,13 +37,13 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> Html<String> {
 
     let cpu = sys.global_cpu_usage();
 
-    let mem_total = sys.total_memory() as f64; // KiB
+    let mem_total = sys.total_memory() as f64;
     let mem_used = sys.used_memory() as f64;
 
     let swap_total = sys.total_swap() as f64;
     let swap_used = sys.used_swap() as f64;
 
-    let to_gb = |kib: f64| kib / 1024.0 / 1024.0;
+    // let to_gb = |kib: f64| kib / 1024.0 / 1024.0;
 
     let mem_percent = if mem_total > 0.0 {
         mem_used / mem_total * 100.0
@@ -41,13 +52,24 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> Html<String> {
     };
 
     let cpu_percent = format!("{:.1}%", cpu);
+    // let mem_text = format!(
+    //     "{:.2} / {:.2} GB ({:.1}%)",
+    //     to_gb(mem_used),
+    //     to_gb(mem_total),
+    //     mem_percent
+    // );
     let mem_text = format!(
-        "{:.2} / {:.2} GB ({:.1}%)",
-        to_gb(mem_used),
-        to_gb(mem_total),
+        "{} / {} ({:.1}%)",
+        format_bytes(mem_used),
+        format_bytes(mem_total),
         mem_percent
     );
-    let swap_text = format!("{:.2} / {:.2} GB", to_gb(swap_used), to_gb(swap_total));
+
+    let swap_text = format!(
+        "{} / {}",
+        format_bytes(swap_used),
+        format_bytes(swap_total)
+    );
 
     let uptime_secs = state.started_at.elapsed().as_secs();
 
@@ -98,20 +120,9 @@ pub struct ProcRow {
     pub pid: i32,
     pub name: String,
     pub cpu_percent: f32,
-    pub mem_bytes: u64,
+    pub mem_bytes: f64,
     pub cpu_text: String,
     pub mem_text: String,
-}
-
-fn format_bytes(bytes: u64) -> String {
-    let mib = bytes as f64 / 1024.0 / 1024.0;
-
-    if mib >= 1024.0 {
-        let gib = mib / 1024.0;
-        format!("{:.2} GB", gib)
-    } else {
-        format!("{:.1} MB", mib)
-    }
 }
 
 fn normalize_proc_mem_bytes(raw: u64, total_mem_kib: u64) -> u64 {
@@ -127,7 +138,7 @@ fn proc_row_from(sys: &sysinfo::System, sys_proc: &sysinfo::Process, pid: sysinf
     let pid_i32 = pid.as_u32() as i32;
 
     let raw = sys_proc.memory();
-    let mem_bytes = normalize_proc_mem_bytes(raw, sys.total_memory());
+    let mem_bytes = normalize_proc_mem_bytes(raw, sys.total_memory()) as f64;
 
     let cpu = sys_proc.cpu_usage();
 
